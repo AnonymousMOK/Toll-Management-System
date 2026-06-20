@@ -1,9 +1,12 @@
 from decimal import Decimal
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from datetime import datetime, timedelta
+from app.schema import PaymentCallbackRequest
 import uuid
+
 
 # Import our database setup and models
 from app.database import engine, get_db
@@ -11,6 +14,14 @@ from app.models import Passage, ETag, AdminAlert, QRToken, Transaction
 from app.schema import VehicleArrivalRequest, ArrivalResponse
 
 app = FastAPI(title="Global Toll Management System API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, replace with your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/db-check")
 def test_db_connection(db: Session = Depends(get_db)):
@@ -106,3 +117,51 @@ def process_vehicle_arrival(request: VehicleArrivalRequest, db: Session = Depend
     except Exception as e:
         db.rollback() # Undo everything if a critical error occurs
         raise HTTPException(status_code=500, detail=f"Transaction failed: {str(e)}")
+
+@app.post("/api/webhooks/payment-callback")
+def payment_webhook(request: PaymentCallbackRequest, db: Session = Depends(get_db)):
+
+    try:
+        # 1. Look up the QR Token in the database
+        qr_record = db.query(QRToken).filter(QRToken.secure_token == request.qr_token).first()
+        
+        # 2. Validation Checks
+        if not qr_record:
+            raise HTTPException(status_code=404, detail="Invalid QR Token.")
+            
+        if qr_record.status == 'Utilized':
+            return {"status": "error", "message": "This QR code has already been paid."}
+            
+        if qr_record.expires_at < datetime.now():
+            qr_record.status = 'Expired'
+            db.commit()
+            return {"status": "error", "message": "QR code expired. Please request a new one."}
+            
+        # 3. Mark Token as Paid
+        qr_record.status = 'Utilized'
+        
+        # 4. Create the Settled Transaction in the Ledger
+        txn = Transaction(
+            passage_id=qr_record.passage_id,
+            amount_charged=Decimal(str(request.amount_paid)),
+            payment_gateway='Mobile_Wallet_Mock',
+            status='Settled'
+        )
+        
+        # 5. Update the Passage (Open the barrier!)
+        passage = db.query(Passage).filter(Passage.passage_id == qr_record.passage_id).first()
+        if passage:
+            passage.payment_method_used = 'QR_Code'
+            passage.exit_timestamp = datetime.now()
+            
+        db.add(txn)
+        db.commit()
+        
+        return {
+            "status": "success",
+            "message": f"Payment of Rs. {request.amount_paid} received. Barrier OPENED."
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

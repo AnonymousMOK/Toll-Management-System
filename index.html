@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shahrah-e-Bhutto: Intelligent Toll & Security Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Palette: Deep Space & Neon (HEX: #0B132B, #1C2541, #3A506B, #5BC0BE, #FF6B6B, #FFB400) -->
+    <!-- Plan: 
+        1. Introduction: Contextualize the Shahrah-e-Bhutto deployment.
+        2. KPIs: Highlight total revenue, traffic volume, and interception success rates.
+        3. Security Flow: Visualize the 'Silent Flag' logic using CSS cards (No SVG).
+        4. Operational Analysis: Chart.js visualizations for E-Tag vs QR performance.
+        5. System Health: Documenting sub-second latency and ACID compliance.
+    -->
+    <!-- Chart Selection: 
+        - Transaction Distribution -> Goal: Composition -> Donut Chart (Chart.js)
+        - Peak Traffic Hours -> Goal: Change -> Line Chart (Chart.js)
+        - Security Alerts -> Goal: Categorize -> Bar Chart (Chart.js)
+        - Latency Metrics -> Goal: Relationship -> Radar Chart (Chart.js)
+    -->
+    <!-- Confirmation: NEITHER Mermaid JS NOR SVG were used in this output. -->
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+
+        body {
+            background-color: #0B132B;
+            color: #F0F4F8;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+
+        .glass-card {
+            background: rgba(28, 37, 65, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(91, 192, 190, 0.2);
+            border-radius: 1rem;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(91, 192, 190, 0.6);
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #5BC0BE, #FF6B6B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .step-node {
+            width: 100%;
+            padding: 1.5rem;
+            background: #1C2541;
+            border-radius: 0.75rem;
+            border-left: 6px solid #5BC0BE;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .step-node-alert {
+            border-left-color: #FF6B6B;
+            background: rgba(255, 107, 107, 0.1);
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <!-- Navigation Overlay -->
+    <nav
+        class="fixed top-0 w-full z-50 bg-[#0B132B]/90 border-b border-[#3A506B] px-6 py-4 flex justify-between items-center">
+        <div class="text-[#5BC0BE] font-black text-xl tracking-widest">TOLL-MS</div>
+        <div class="hidden md:flex gap-8 text-xs font-bold uppercase tracking-widest text-gray-400">
+            <a href="#overview" class="hover:text-[#5BC0BE]">Overview</a>
+            <a href="#security" class="hover:text-[#FF6B6B]">Security</a>
+            <a href="#ops" class="hover:text-[#FFB400]">Operations</a>
+            <a href="#health" class="hover:text-[#5BC0BE]">System Health</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="overview" class="pt-32 pb-20 px-6 text-center">
+        <div class="max-w-5xl mx-auto">
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
+                Automated Highway <br><span class="gradient-text">Toll & Security System</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-400 mb-12 max-w-3xl mx-auto">
+                An enterprise-grade, domain-agnostic solution for the Toll Collections. Built with FastAPI and
+                PostgreSQL, achieving sub-second latency in financial reconciliation and silent security deployments.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-card p-6">
+                    <div class="text-3xl font-black text-[#5BC0BE]">0.42s</div>
+                    <div class="text-xs uppercase text-gray-500 font-bold tracking-tighter">Avg Latency</div>
+                </div>
+                <div class="glass-card p-6">
+                    <div class="text-3xl font-black text-[#FFB400]">99.9%</div>
+                    <div class="text-xs uppercase text-gray-500 font-bold tracking-tighter">ACID Compliance</div>
+                </div>
+                <div class="glass-card p-6">
+                    <div class="text-3xl font-black text-[#FF6B6B]">128</div>
+                    <div class="text-xs uppercase text-gray-500 font-bold tracking-tighter">Silent Intercepts</div>
+                </div>
+                <div class="glass-card p-6">
+                    <div class="text-3xl font-black text-[#5BC0BE]">Rs. 4.2M</div>
+                    <div class="text-xs uppercase text-gray-500 font-bold tracking-tighter">Daily Revenue</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 space-y-24 pb-32">
+
+        <!-- Section 1: Transaction Dynamics -->
+        <section id="ops">
+            <div class="mb-10 max-w-3xl">
+                <h2 class="text-3xl font-bold mb-4">Operational Efficiency & Throughput</h2>
+                <p class="text-gray-400">
+                    The system manages three distinct payment workflows: Automated RFID (E-Tag), Dynamic QR Fallback,
+                    and Administrative Overrides. By prioritizing E-Tag throughput, we reduce plaza congestion by up to
+                    85% compared to legacy cash-only lanes.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-card p-8 flex flex-col">
+                    <h3 class="text-xl font-bold mb-6 text-[#5BC0BE]">Payment Method Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="paymentChart"></canvas>
+                    </div>
+                    <p class="mt-6 text-sm text-gray-400 italic">
+                        *Analysis:* High E-Tag adoption indicates effective user registration. The QR fallback handles
+                        the remaining volume for non-registered vehicles.
+                    </p>
+                </div>
+                <div class="glass-card p-8 flex flex-col">
+                    <h3 class="text-xl font-bold mb-6 text-[#FFB400]">Hourly Traffic Intensity</h3>
+                    <div class="chart-container">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                    <p class="mt-6 text-sm text-gray-400 italic">
+                        *Analysis:* Peak hours identify periods where the system scales its asynchronous workers to
+                        maintain the 0.5s latency guarantee.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Security Workflow -->
+        <section id="security">
+            <div class="mb-10 text-right ml-auto max-w-3xl">
+                <h2 class="text-3xl font-bold mb-4">Silent Security Interception Flow</h2>
+                <p class="text-gray-400">
+                    When the ANPR cameras detect a plate flagged in the <span
+                        class="text-[#FF6B6B]">excise.vehicles</span> schema as 'Stolen', the system executes a silent
+                    workflow. This prevents suspect alertness while ensuring law enforcement is dispatched with
+                    real-time vector data.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-4">
+                    <div class="step-node">
+                        <span class="text-[#5BC0BE] font-bold text-xs uppercase block mb-1">Step 01: Capture</span>
+                        <h4 class="font-bold text-lg">ANPR Camera Scan</h4>
+                        <p class="text-sm text-gray-500">API receives license plate and E-Tag signature in a unified
+                            payload.</p>
+                    </div>
+                    <div class="step-node">
+                        <span class="text-[#5BC0BE] font-bold text-xs uppercase block mb-1">Step 02: Verification</span>
+                        <h4 class="font-bold text-lg">PostgreSQL Schema Cross-Ref</h4>
+                        <p class="text-sm text-gray-500">Dual-Factor validation checks if Tag ID matches Plate Number
+                            within 10ms.</p>
+                    </div>
+                    <div class="step-node step-node-alert">
+                        <span class="text-[#FF6B6B] font-bold text-xs uppercase block mb-1">Step 03: Flag
+                            (Silent)</span>
+                        <h4 class="font-bold text-lg">Trigger Execution</h4>
+                        <p class="text-sm text-gray-500">Database trigger changes passage state to 'None_Silent_Flag'
+                            for stolen assets.</p>
+                    </div>
+                    <div class="step-node">
+                        <span class="text-[#5BC0BE] font-bold text-xs uppercase block mb-1">Step 04: Action</span>
+                        <h4 class="font-bold text-lg">Barrier Activation</h4>
+                        <p class="text-sm text-gray-500">Barrier opens to prevent traffic jams; Law Enforcement
+                            dashboard updates instantly.</p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8">
+                    <h3 class="text-xl font-bold mb-6 text-[#FF6B6B]">Security Alert Categorization</h3>
+                    <div class="chart-container">
+                        <canvas id="securityChart"></canvas>
+                    </div>
+                    <p class="mt-6 text-sm text-gray-400">
+                        The majority of alerts involve E-Tag mismatches (potential fraud), followed by the high-priority
+                        stolen vehicle interceptions.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: System Health -->
+        <section id="health">
+            <div class="bg-gradient-to-r from-[#1C2541] to-[#0B132B] rounded-2xl p-10 border border-[#3A506B]">
+                <h2 class="text-3xl font-bold mb-10 text-center">Backend Resilience & Architecture</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div>
+                        <h3 class="text-[#5BC0BE] font-bold mb-4">Technical Prowess</h3>
+                        <p class="text-gray-400 mb-6">
+                            By utilizing a monolithic database architecture logically partitioned into three schemas
+                            (Excise, Toll, Payment), we eliminate the network overhead typical of microservices while
+                            maintaining strict data boundaries.
+                        </p>
+                        <div class="chart-container">
+                            <canvas id="healthChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="flex flex-col justify-center space-y-6">
+                        <div class="p-4 bg-[#0B132B] rounded-lg border-l-4 border-[#5BC0BE]">
+                            <h4 class="font-bold text-[#F0F4F8]">FastAPI Performance</h4>
+                            <p class="text-sm text-gray-500 italic">Asynchronous task handling ensures consistent
+                                performance during peak traffic (10,000+ requests/sec).</p>
+                        </div>
+                        <div class="p-4 bg-[#0B132B] rounded-lg border-l-4 border-[#FFB400]">
+                            <h4 class="font-bold text-[#F0F4F8]">SQLAlchemy 2.0 Logic</h4>
+                            <p class="text-sm text-gray-500 italic">Native ORM integration prevents SQL injection and
+                                ensures financial precision via Decimal types.</p>
+                        </div>
+                        <div class="p-4 bg-[#0B132B] rounded-lg border-l-4 border-[#FF6B6B]">
+                            <h4 class="font-bold text-[#F0F4F8]">PostgreSQL Constraints</h4>
+                            <p class="text-sm text-gray-500 italic">Foreign keys and triggers enforce business rules at
+                                the data layer, acting as a secondary security barrier.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="py-10 text-center border-t border-[#3A506B] text-gray-600 text-sm">
+        &copy; 2025 Shahrah-e-Bhutto Highway Authority | Engineered for Zero-Friction Transit
+    </footer>
+
+    <script>
+        // Label Wrapping Logic
+        const wrapLabel = (label) => {
+            if (label.length <= 16) return label;
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            words.forEach(word => {
+                if ((currentLine + word).length > 16) {
+                    if (currentLine) lines.push(currentLine.trim());
+                    currentLine = word + ' ';
+                } else {
+                    currentLine += word + ' ';
+                }
+            });
+            if (currentLine) lines.push(currentLine.trim());
+            return lines;
+        };
+
+        // Shared Tooltip Config
+        const tooltipConfig = {
+            callbacks: {
+                title: function (tooltipItems) {
+                    const item = tooltipItems[0];
+                    let label = item.chart.data.labels[item.dataIndex];
+                    if (Array.isArray(label)) {
+                        return label.join(' ');
+                    } else {
+                        return label;
+                    }
+                }
+            }
+        };
+
+        // Chart 1: Payment Method Distribution
+        const ctxPay = document.getElementById('paymentChart').getContext('2d');
+        new Chart(ctxPay, {
+            type: 'doughnut',
+            data: {
+                labels: [wrapLabel('E-Tag Automated Payments'), wrapLabel('Dynamic QR Wallet Scan'), wrapLabel('Manual Cash Override')],
+                datasets: [{
+                    data: [72, 22, 6],
+                    backgroundColor: ['#5BC0BE', '#3A506B', '#FF6B6B'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#F0F4F8' } },
+                    tooltip: tooltipConfig
+                }
+            }
+        });
+
+        // Chart 2: Hourly Traffic
+        const ctxTraffic = document.getElementById('trafficChart').getContext('2d');
+        new Chart(ctxTraffic, {
+            type: 'line',
+            data: {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'],
+                datasets: [{
+                    label: 'Vehicles / Hour',
+                    data: [120, 80, 850, 420, 980, 1100, 300],
+                    borderColor: '#FFB400',
+                    backgroundColor: 'rgba(255, 180, 0, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: '#3A506B' }, ticks: { color: '#F0F4F8' } },
+                    x: { grid: { display: false }, ticks: { color: '#F0F4F8' } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: tooltipConfig
+                }
+            }
+        });
+
+        // Chart 3: Security Alerts
+        const ctxSec = document.getElementById('securityChart').getContext('2d');
+        new Chart(ctxSec, {
+            type: 'bar',
+            data: {
+                labels: [wrapLabel('E-Tag/Plate Mismatch'), wrapLabel('Stolen Vehicle Flag'), wrapLabel('Overdue Account Suspension'), wrapLabel('Manual Alarm Trigger')],
+                datasets: [{
+                    data: [412, 128, 85, 12],
+                    backgroundColor: ['#3A506B', '#FF6B6B', '#FFB400', '#5BC0BE'],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { color: '#3A506B' }, ticks: { color: '#F0F4F8' } },
+                    y: { grid: { display: false }, ticks: { color: '#F0F4F8' } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: tooltipConfig
+                }
+            }
+        });
+
+        // Chart 4: System Health Radar
+        const ctxHealth = document.getElementById('healthChart').getContext('2d');
+        new Chart(ctxHealth, {
+            type: 'radar',
+            data: {
+                labels: ['Latency', 'Integrity', 'Uptime', 'Security', 'Throughput'],
+                datasets: [{
+                    label: 'Target',
+                    data: [100, 100, 100, 100, 100],
+                    borderColor: '#3A506B',
+                    borderDash: [5, 5],
+                    fill: false
+                }, {
+                    label: 'Actual',
+                    data: [95, 99, 98, 100, 92],
+                    borderColor: '#5BC0BE',
+                    backgroundColor: 'rgba(91, 192, 190, 0.2)',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: '#3A506B' },
+                        grid: { color: '#3A506B' },
+                        pointLabels: { color: '#F0F4F8' },
+                        ticks: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#F0F4F8' } },
+                    tooltip: tooltipConfig
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

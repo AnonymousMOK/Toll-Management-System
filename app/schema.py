@@ -15,3 +15,7 @@ class ArrivalResponse(BaseModel):
     passage_id: UUID
     requires_qr: bool
     qr_token: Optional[str] = None
+
+class PaymentCallbackRequest(BaseModel):
+    qr_token: str
+    amount_paid: float

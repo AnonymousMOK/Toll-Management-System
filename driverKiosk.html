@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Toll Kiosk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Smooth transitions for the full-screen color flashes */
+        .screen-bg {
+            transition: background-color 0.4s ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="bg-black h-screen w-screen overflow-hidden flex flex-col font-sans select-none text-white screen-bg"
+    id="main-bg">
+
+    <!-- Top Branding -->
+    <div
+        class="h-20 bg-black/40 flex items-center justify-between px-10 absolute top-0 w-full z-10 border-b border-white/10">
+        <h1 class="text-3xl font-black tracking-widest text-white/80">TOLL EXPRESSWAY</h1>
+        <div id="clock" class="text-2xl font-mono text-white/80">00:00</div>
+    </div>
+
+    <!-- Main Driver Display Area -->
+    <div class="flex-1 flex flex-col items-center justify-center p-10 text-center z-0 relative mt-10">
+
+        <!-- Plate Number Echo -->
+        <div id="plate-display"
+            class="text-6xl font-mono font-bold tracking-widest mb-6 opacity-0 transition-opacity duration-300">
+            KHI-123
+        </div>
+
+        <!-- Primary Instruction / Status -->
+        <h2 id="primary-text" class="text-7xl md:text-9xl font-black mb-8 drop-shadow-lg uppercase tracking-tight">
+            PLEASE PULL FORWARD
+        </h2>
+
+        <!-- Secondary Information -->
+        <p id="secondary-text" class="text-3xl md:text-5xl font-medium text-white/90">
+            Maximum Speed 15 km/h
+        </p>
+
+        <!-- QR Code Area (Hidden by default) -->
+        <div id="qr-container"
+            class="hidden mt-12 bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center transform transition-all">
+            <img id="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=MockData"
+                alt="Payment QR" class="w-64 h-64 md:w-80 md:h-80 mb-4">
+            <p class="text-black text-2xl font-bold">SCAN WITH MOBILE APP</p>
+            <p class="text-gray-600 text-lg font-mono mt-1" id="qr-token-display">TOKEN: ---</p>
+        </div>
+
+        <!-- Success Icon (Hidden by default) -->
+        <div id="success-icon" class="hidden mt-12">
+            <div class="w-48 h-48 bg-white rounded-full flex items-center justify-center shadow-2xl">
+                <span class="text-[#059669] text-9xl">&#10004;</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PRESENTER CONTROL PANEL (Subtle at the bottom for your presentation) -->
+    <div
+        class="h-24 bg-gray-900 border-t border-gray-700 flex items-center justify-center gap-4 px-6 opacity-30 hover:opacity-100 transition-opacity duration-300 relative z-20">
+        <span class="text-gray-400 font-mono text-sm absolute left-6 uppercase">Presenter Controls:</span>
+
+        <button onclick="simulateBackendCall('KHI-123', 'TAG-PK-001')"
+            class="bg-gray-800 hover:bg-gray-700 border border-gray-600 px-6 py-2 rounded text-sm font-mono transition-colors">
+            1. Valid Tag
+        </button>
+        <button onclick="simulateBackendCall('LHR-456', null)"
+            class="bg-gray-800 hover:bg-gray-700 border border-gray-600 px-6 py-2 rounded text-sm font-mono transition-colors">
+            2. Needs QR
+        </button>
+        <button onclick="simulateBackendCall('ISB-789', null)"
+            class="bg-gray-800 hover:bg-gray-700 border border-gray-600 px-6 py-2 rounded text-sm font-mono transition-colors">
+            3. Stolen (Silent)
+        </button>
+        <div class="w-px h-8 bg-gray-700 mx-2"></div>
+        <button onclick="simulateWebhookPayment()"
+            class="bg-green-900/50 hover:bg-green-800 border border-green-700 px-6 py-2 rounded text-green-400 text-sm font-mono transition-colors">
+            Trigger Webhook (Pay QR)
+        </button>
+        <button onclick="resetToIdle()"
+            class="bg-gray-800 hover:bg-gray-700 border border-gray-600 px-6 py-2 rounded text-sm font-mono transition-colors absolute right-6">
+            Reset Kiosk
+        </button>
+    </div>
+
+    <script>
+        // Start the Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }, 1000);
+
+        const API_BASE = "http://127.0.0.1:8000";
+        let activeQRToken = null;
+        let idleTimeout = null;
+
+        // UI Elements
+        const mainBg = document.getElementById('main-bg');
+        const plateDisplay = document.getElementById('plate-display');
+        const primaryText = document.getElementById('primary-text');
+        const secondaryText = document.getElementById('secondary-text');
+        const qrContainer = document.getElementById('qr-container');
+        const successIcon = document.getElementById('success-icon');
+        const qrTokenDisplay = document.getElementById('qr-token-display');
+        const qrImage = document.getElementById('qr-image');
+
+        function resetToIdle() {
+            clearTimeout(idleTimeout);
+            mainBg.className = "bg-slate-900 h-screen w-screen overflow-hidden flex flex-col font-sans select-none text-white screen-bg";
+            plateDisplay.style.opacity = "0";
+            primaryText.innerText = "PLEASE PULL FORWARD";
+            secondaryText.innerText = "Maximum Speed 15 km/h";
+            qrContainer.classList.add('hidden');
+            successIcon.classList.add('hidden');
+            activeQRToken = null;
+        }
+
+        function setScanningState(plate) {
+            clearTimeout(idleTimeout);
+            mainBg.className = "bg-blue-900 h-screen w-screen overflow-hidden flex flex-col font-sans select-none text-white screen-bg";
+            plateDisplay.innerText = plate;
+            plateDisplay.style.opacity = "1";
+            primaryText.innerText = "SCANNING...";
+            secondaryText.innerText = "Please wait";
+            qrContainer.classList.add('hidden');
+            successIcon.classList.add('hidden');
+        }
+
+        function setSuccessState(message) {
+            mainBg.className = "bg-emerald-600 h-screen w-screen overflow-hidden flex flex-col font-sans select-none text-white screen-bg";
+            primaryText.innerText = "CLEARED!";
+            secondaryText.innerText = message || "Barrier Opening. Drive Safely.";
+            qrContainer.classList.add('hidden');
+            successIcon.classList.remove('hidden');
+
+            // Auto-reset after 5 seconds
+            idleTimeout = setTimeout(resetToIdle, 5000);
+        }
+
+        function setQRState(token) {
+            mainBg.className = "bg-amber-500 h-screen w-screen overflow-hidden flex flex-col font-sans select-none text-black screen-bg";
+            primaryText.innerText = "SCAN TO PAY Rs. 50";
+            secondaryText.innerText = "E-Tag Not Found or Low Balance";
+
+            // Generate QR Image based on the token
+            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${token}`;
+            qrTokenDisplay.innerText = `TOKEN: ${token.substring(0, 8)}...`;
+
+            qrContainer.classList.remove('hidden');
+            successIcon.classList.add('hidden');
+        }
+
+        // --- API CALLS ---
+
+        async function simulateBackendCall(plate, e_tag_id) {
+            setScanningState(plate);
+
+            try {
+                // Simulate slight network delay for dramatic effect in presentation
+                await new Promise(r => setTimeout(r, 800));
+
+                const response = await fetch(`${API_BASE}/api/lane/vehicle-arrival`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lane_id: 101, // Using automated lane ID
+                        captured_plate: plate,
+                        e_tag_id: e_tag_id
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    // For stolen vehicles, we still show success to the driver!
+                    // The backend handles the silent alert to the police.
+                    if (plate === 'ISB-789') {
+                        setSuccessState("Proceed Forward.");
+                    } else {
+                        setSuccessState("Rs. 50.00 Deducted from E-Tag.");
+                    }
+                }
+                else if (data.status === "pending_payment") {
+                    activeQRToken = data.qr_token;
+                    setQRState(data.qr_token);
+                }
+            } catch (error) {
+                console.error("API Error:", error);
+                mainBg.className = "bg-red-700 h-screen w-screen overflow-hidden flex flex-col font-sans select-none text-white screen-bg";
+                primaryText.innerText = "SYSTEM ERROR";
+                secondaryText.innerText = "Please contact support";
+            }
+        }
+
+        async function simulateWebhookPayment() {
+            if (!activeQRToken) return;
+
+            primaryText.innerText = "PROCESSING...";
+
+            try {
+                const response = await fetch(`${API_BASE}/api/webhooks/payment-callback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        qr_token: activeQRToken,
+                        amount_paid: 50.00
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    setSuccessState("Payment Received via Mobile App.");
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error("Webhook Error:", error);
+            }
+        }
+
+        // Initialize
+        resetToIdle();
+    </script>
+</body>
+
+</html>

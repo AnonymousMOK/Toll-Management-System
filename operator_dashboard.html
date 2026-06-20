@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toll Operator UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0B132B;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .monitor-glow {
+            box-shadow: 0 0 20px rgba(91, 192, 190, 0.2);
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-[#1C2541] border-b-4 border-[#3A506B] p-4 flex justify-between items-center shadow-lg">
+        <div>
+            <h1 class="text-2xl font-black text-[#5BC0BE] tracking-wider">SHAHRAH TOLLS</h1>
+            <p class="text-sm text-gray-400 font-mono">LANE 102 - HYBRID OPERATION</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="connection-status" class="flex items-center gap-2 text-green-400 font-mono text-sm">
+                <span class="h-3 w-3 rounded-full bg-green-500 animate-pulse"></span>
+                SYSTEM ONLINE
+            </div>
+            <div class="text-xl font-mono bg-[#0B132B] px-4 py-2 rounded border border-[#3A506B]" id="clock">00:00:00
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 p-6 gap-6">
+
+        <div class="flex-1 flex flex-col gap-6">
+
+            <div
+                class="bg-[#1C2541] rounded-xl border-2 border-[#3A506B] monitor-glow flex-1 flex flex-col items-center justify-center p-8 relative">
+                <div class="absolute top-4 left-4 text-gray-400 font-mono text-sm">CURRENT VEHICLE</div>
+
+                <h2 id="plate-display"
+                    class="text-8xl font-black tracking-widest text-white mb-4 transition-colors duration-300">WAITING
+                </h2>
+                <div id="status-display"
+                    class="text-3xl font-bold text-gray-500 bg-[#0B132B] px-8 py-3 rounded-full border border-gray-700">
+                    Awaiting Camera Scan...
+                </div>
+
+                <div id="qr-area" class="hidden mt-8 flex flex-col items-center">
+                    <p class="text-[#FFB400] font-mono mb-2">DYNAMIC QR GENERATED</p>
+                    <div class="bg-white p-4 rounded-lg">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=MockQR" alt="QR Code"
+                            class="w-32 h-32">
+                    </div>
+                    <p id="qr-token-text" class="text-xs text-gray-400 mt-2 font-mono break-all max-w-md text-center">
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 h-32">
+                <button onclick="simulateArrival('KHI-123', 'TAG-PK-001')"
+                    class="bg-[#3A506B] hover:bg-[#5BC0BE] text-white font-bold rounded-lg border-b-4 border-[#1C2541] active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center justify-center">
+                    <span class="text-xl">Simulate</span>
+                    <span class="text-sm font-normal text-gray-300">Valid E-Tag (KHI-123)</span>
+                </button>
+
+                <button onclick="simulateArrival('LHR-456', null)"
+                    class="bg-[#3A506B] hover:bg-[#FFB400] text-white font-bold rounded-lg border-b-4 border-[#1C2541] active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center justify-center">
+                    <span class="text-xl">Simulate</span>
+                    <span class="text-sm font-normal text-gray-300">No Tag (Requires QR)</span>
+                </button>
+
+                <button onclick="simulateArrival('ISB-789', null)"
+                    class="bg-[#3A506B] hover:bg-[#FF6B6B] text-white font-bold rounded-lg border-b-4 border-[#1C2541] active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center justify-center">
+                    <span class="text-xl">Simulate</span>
+                    <span class="text-sm font-normal text-gray-300">Stolen Car (ISB-789)</span>
+                </button>
+            </div>
+
+            <div id="payment-controls" class="hidden">
+                <button onclick="simulateMobilePayment()"
+                    class="w-full bg-green-600 hover:bg-green-500 text-white text-2xl font-black py-4 rounded-lg border-b-4 border-green-800 active:border-b-0 active:translate-y-1 transition-all shadow-[0_0_15px_rgba(34,197,94,0.5)]">
+                    CONFIRM MOBILE PAYMENT (WEBHOOK)
+                </button>
+            </div>
+        </div>
+
+        <div class="w-96 bg-[#1C2541] rounded-xl border border-[#3A506B] flex flex-col">
+            <div class="p-4 border-b border-[#3A506B] bg-[#0B132B] rounded-t-xl">
+                <h3 class="text-lg font-bold text-[#5BC0BE]">Recent Transactions</h3>
+            </div>
+            <div id="log-container" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- UI LOGIC ---
+        setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
+
+        const API_BASE = "http://127.0.0.1:8000";
+        let currentQRToken = null;
+
+        function updateUIState(plate, color, statusText, isQR) {
+            const plateDisplay = document.getElementById('plate-display');
+            const statusDisplay = document.getElementById('status-display');
+            const qrArea = document.getElementById('qr-area');
+            const paymentControls = document.getElementById('payment-controls');
+
+            plateDisplay.innerText = plate;
+            plateDisplay.style.color = color;
+
+            statusDisplay.innerText = statusText;
+            statusDisplay.style.borderColor = color;
+            statusDisplay.style.color = color;
+
+            if (isQR) {
+                qrArea.classList.remove('hidden');
+                paymentControls.classList.remove('hidden');
+            } else {
+                qrArea.classList.add('hidden');
+                paymentControls.classList.add('hidden');
+
+                // Auto-reset UI after 3 seconds for successful automated passages
+                setTimeout(resetUI, 3000);
+            }
+        }
+
+        function resetUI() {
+            updateUIState("WAITING", "#ffffff", "Awaiting Camera Scan...", false);
+            currentQRToken = null;
+        }
+
+        function addToLog(plate, action, colorClass) {
+            const time = new Date().toLocaleTimeString();
+            const logHTML = `
+                <div class="bg-[#0B132B] p-3 rounded border-l-4 ${colorClass} flex justify-between items-center text-sm">
+                    <div>
+                        <div class="font-bold font-mono text-white">${plate}</div>
+                        <div class="text-xs text-gray-400">${action}</div>
+                    </div>
+                    <div class="text-gray-500 text-xs">${time}</div>
+                </div>
+            `;
+            document.getElementById('log-container').insertAdjacentHTML('afterbegin', logHTML);
+        }
+
+        // --- BACKEND API INTEGRATION ---
+
+        async function simulateArrival(plate, e_tag_id) {
+            updateUIState("SCANNING...", "#3A506B", "Processing data...", false);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/lane/vehicle-arrival`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lane_id: 102,
+                        captured_plate: plate,
+                        e_tag_id: e_tag_id
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    // Valid E-Tag or Stolen Vehicle (Backend handles it and opens barrier)
+                    let color = plate === 'ISB-789' ? '#FF6B6B' : '#5BC0BE';
+                    updateUIState(plate, color, data.message, false);
+                    addToLog(plate, data.message.substring(0, 25) + "...", plate === 'ISB-789' ? 'border-[#FF6B6B]' : 'border-[#5BC0BE]');
+                }
+                else if (data.status === "pending_payment") {
+                    // Requires QR Fallback
+                    currentQRToken = data.qr_token;
+                    document.getElementById('qr-token-text').innerText = "Token ID: " + data.qr_token;
+                    updateUIState(plate, "#FFB400", "MANUAL PAYMENT REQUIRED", true);
+                    addToLog(plate, "QR Generated. Awaiting Pay.", "border-[#FFB400]");
+                }
+            } catch (error) {
+                console.error(error);
+                updateUIState("ERROR", "#FF6B6B", "CONNECTION FAILED", false);
+            }
+        }
+
+        async function simulateMobilePayment() {
+            if (!currentQRToken) return;
+
+            const plate = document.getElementById('plate-display').innerText;
+            updateUIState(plate, "#3A506B", "Verifying Payment...", true);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/webhooks/payment-callback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        qr_token: currentQRToken,
+                        amount_paid: 50.00
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    updateUIState(plate, "#5BC0BE", "PAYMENT SUCCESS - BARRIER OPEN", false);
+                    addToLog(plate, "Paid via Webhook (Rs. 50)", "border-[#5BC0BE]");
+                } else {
+                    updateUIState(plate, "#FF6B6B", data.message, true);
+                }
+            } catch (error) {
+                console.error(error);
+                updateUIState(plate, "#FF6B6B", "WEBHOOK FAILED", true);
+            }
+        }
+    </script>
+</body>
+
+</html>
