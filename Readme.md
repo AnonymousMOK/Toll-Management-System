@@ -63,7 +63,7 @@ DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/shahrah_toll_sys
 
 ```
 
-*(Ensure a blank database named `shahrah_toll_system` is created in pgAdmin first).*
+*(Ensure a blank database named `toll_management_system` is created in pgAdmin first).*
 
 ### 4. Initialize the Database Architecture
 
@@ -76,7 +76,7 @@ python init_db.py
 
 ### 5. Inject Mock Data
 
-Open **pgAdmin 4**, open the Query Tool for `shahrah_toll_system`, and execute the localized DML script (provided separately) to populate the database with mock Pakistani citizens, vehicles, toll plazas, and E-Tags.
+Open **pgAdmin 4**, open the Query Tool for `toll_management_system`, and execute the localized DML script (provided separately) to populate the database with mock Pakistani citizens, vehicles, toll plazas, and E-Tags.
 
 ---
 
