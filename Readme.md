@@ -1,48 +1,48 @@
- Highway Toll Management System (Full-Stack Prototype)
+```markdown
+# 🛣️ Highway Toll Management System (Full-Stack Prototype)
 
-An enterprise-grade, domain-agnostic toll management system built with Python, FastAPI, and PostgreSQL. This system handles high-throughput vehicle transit operations, automated fraud detection, and multi-gateway payment processing.
+An enterprise-grade, domain-agnostic toll management system built with Python, FastAPI, and PostgreSQL. This system handles high-throughput vehicle transit operations, automated fraud detection, and multi-gateway payment processing. 
 
-Currently configured with localized data and UI interfaces for the Central Expressway (Shahrah-e-Bhutto).
+Currently configured with localized data and UI interfaces for the **Central Expressway (Shahrah-e-Bhutto)**.
 
- Key Features
+---
 
-Silent Theft Interception (PostgreSQL Triggers): Utilizes native database triggers (BEFORE INSERT) to instantly cross-reference ANPR (Automatic Number Plate Recognition) camera reads with the national excise database. Stolen vehicles are silently flagged to the administration, opening the barrier to avoid traffic bottlenecks and suspect alertness.
+## ✨ Key Features
 
-Dual-Factor E-Tag Validation: Prevents toll evasion (e.g., swapping passenger car tags onto commercial trucks) by cross-referencing overhead RFID scans with ANPR plate reads. Mismatches trigger a fraud alert and default the lane to a temporary QR code fallback.
+* **Silent Theft Interception (PostgreSQL Triggers):** Utilizes native database triggers (`BEFORE INSERT`) to instantly cross-reference ANPR (Automatic Number Plate Recognition) camera reads with the national `excise` database. Stolen vehicles are silently flagged to the administration, opening the barrier to avoid traffic bottlenecks and suspect alertness.
+* **Dual-Factor E-Tag Validation:** Prevents toll evasion (e.g., swapping passenger car tags onto commercial trucks) by cross-referencing overhead RFID scans with ANPR plate reads. Mismatches trigger a fraud alert and default the lane to a temporary QR code fallback.
+* **Dynamic QR Session Tokens:** Unrecognized vehicles, low-balance accounts, or fraudulent E-Tags automatically generate a single-use, cryptographically secure QR token mapped strictly to that transit session (expires exactly 180 seconds after generation).
+* **Multi-Gateway Settlement:** Dedicated webhook endpoints elegantly handle payments from distinct physical and digital gateways (`Mobile` app wallets, physical `Cash` insertion, or `E-Tag` top-ups).
+* **Role-Specific UI Dashboards:** Includes standalone HTML/JS frontends (Driver Kiosk, Operator Dashboard, Analytics Infographic) that connect directly to the FastAPI backend via the Fetch API.
 
-Dynamic QR Session Tokens: Unrecognized vehicles, low-balance accounts, or fraudulent E-Tags automatically generate a single-use, cryptographically secure QR token mapped strictly to that transit session (expires in 180 seconds).
+---
 
-Multi-Gateway Settlement: Dedicated webhook endpoints elegantly handle payments from different physical and digital gateways (Mobile Wallets, Cash Insertions, or E-Tag Top-ups).
+## 🛠️ Tech Stack
 
-Role-Specific UI Dashboards: Includes three distinct vanilla HTML/JS frontends (Driver Kiosk, Operator Dashboard, Analytics Infographic) that connect directly to the FastAPI backend.
+* **Backend Framework:** FastAPI (Python 3.9+)
+* **Database:** PostgreSQL
+* **ORM:** SQLAlchemy 2.0
+* **Data Validation:** Pydantic
+* **Server:** Uvicorn
+* **Frontend Dashboards:** Vanilla HTML5, JavaScript (Fetch API), Tailwind CSS (CDN), Chart.js
 
- Tech Stack
+---
 
-Backend Framework: FastAPI (Python 3.9+)
+## 📂 Project Structure
 
-Database: PostgreSQL (pgAdmin 4)
-
-ORM: SQLAlchemy 2.0
-
-Data Validation: Pydantic
-
-Server: Uvicorn
-
-Frontend: Vanilla HTML5, JavaScript (Fetch API), Tailwind CSS (CDN), Chart.js
-
-📂 Project Structure
-
+```text
 toll_management_system/
 │
 ├── .env                        # Database connection string
 ├── requirements.txt            # Python dependencies
 ├── init_db.py                  # Automated SQLAlchemy schema & trigger generator
 ├── Data.sql                    # SQL Script to seed mock citizens, vehicles, and tags
-├── swagger_test_suite.csv      # Test vectors for Swagger/Postman API validation
+├── swagger_test_suite.csv      # SQA test vectors for API validation
 │
-├── Frontend Interfaces/        # Standalone UIs (Double-click to run)
-│   ├── index.html              # High-level Analytics & Presentation Infographic
+├── Standalone UIs/             # Frontend Prototypes (Double-click to run)
+│   ├── index.html              # Executive Analytics & Presentation Infographic
 │   ├── driverKiosk.html        # Automated Driver-Facing Kiosk UI
+│   ├── standalone_kiosk.html   # Offline Simulated Kiosk (No backend needed)
 │   └── operator_dashboard.html # Manual Lane Operator Terminal UI
 │
 └── app/                        # Core Backend Application
@@ -52,86 +52,145 @@ toll_management_system/
     ├── schema.py               # Pydantic models for request/response validation
     └── main.py                 # FastAPI application and route endpoints
 
+```
 
- Setup & Installation Guide
+---
 
-1. Prerequisites
+## 🚀 Setup & Installation Guide
 
-Python 3.9+ installed.
+### 1. Prerequisites
 
-PostgreSQL (pgAdmin 4) installed and running locally.
+* **Python 3.9+** installed on your system.
+* **PostgreSQL (pgAdmin 4)** installed and running locally.
 
-2. Install Dependencies
+### 2. Install Python Dependencies
 
 Open your terminal in the root directory and install the required packages:
 
+```bash
 pip install fastapi uvicorn sqlalchemy psycopg2-binary python-dotenv pydantic
 
+```
 
-3. Environment Variables
+### 3. Configure Environment Variables
 
-Ensure the .env file in your root directory contains your active PostgreSQL connection string. Create a blank database named central_toll_system in pgAdmin.
+Create or verify the `.env` file in your root directory. Make sure a blank database named `central_toll_system` is created inside pgAdmin first:
 
-DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/central_toll_system
+```env
+DATABASE_URL=postgresql://postgres:mokpost@localhost:5432/central_toll_system
 
+```
 
-4. Initialize the Database Architecture
+### 4. Initialize Database Architecture
 
-Run the initialization script to drop old data, create the excise, toll, and payment schemas, generate tables, and inject the PostgreSQL silent theft trigger.
+Run the automated bootstrapping script. This will construct the isolated `excise`, `toll`, and `payment` schemas, generate all SQL tables via SQLAlchemy, and inject the PostgreSQL silent theft interception trigger:
 
+```bash
 python init_db.py
 
+```
 
-5. Inject Mock Data
+### 5. Inject Mock Ground-Truth Data
 
-Open pgAdmin 4, open the Query Tool for your database, and execute the Data.sql script to populate the database with mock Pakistani citizens, vehicles, toll plazas, and varying E-Tag financial states.
+Open **pgAdmin 4**, open the Query Tool for `central_toll_system`, and execute the contents of `Data.sql` to populate the ledger with test citizen profiles, registered vehicles, toll plazas, and varying E-Tag balance states.
 
- Running the System
+---
 
-Step 1: Start the Backend Server
+## 🚦 Running the System
 
-Start the local Uvicorn server with hot-reloading enabled. The CORS middleware allows the local HTML files to communicate with it.
+### Step 1: Start the Fast API Backend Server
 
+Launch the local Uvicorn server with hot-reloading enabled. The built-in CORS middleware allows local HTML files to communicate with the endpoints effortlessly:
+
+```bash
 uvicorn app.main:app --reload
 
+```
 
-API Base URL: http://127.0.0.1:8000
+* **Live API Base:** `http://127.0.0.1:8000`
+* **Interactive Swagger UI:** `http://127.0.0.1:8000/docs`
 
-Swagger API Docs: http://127.0.0.1:8000/docs
+### Step 2: Launch the Frontend Interfaces
 
-Step 2: Launch the Frontend UIs
+No Node.js configuration or separate web server is required. Simply double-click any of the HTML files in your file explorer to open them instantly in any browser:
 
-No Node.js or web server is required for the frontend. Simply double-click any of the HTML files to open them in your browser:
+* **`driverKiosk.html`**: Simulates the automated smart toll lane. Use the bottom presenter panel to simulate vehicle arrivals (`KHI-123`, `LHR-456`, `ISB-789`).
+* **`operator_dashboard.html`**: Simulates a hybrid/manual booth worker's touch terminal.
+* **`index.html`**: Displays executive throughput analytics, KPI metrics, and system flow visualizers.
+* **`standalone_kiosk.html`**: An offline-only presentation fallback that simulates all network delays and visual states entirely in the browser.
 
-Open driverKiosk.html to simulate the automated lane experience. Use the presenter buttons at the bottom to trigger Backend calls.
+---
 
-Open operator_dashboard.html to simulate a manual booth worker's interface.
+## 🧪 SQA Testing & Validation Matrix
 
-Open index.html to view the live executive dashboard and system architecture.
+When demonstrating the live API via Swagger UI (`http://127.0.0.1:8000/docs`), use the test vectors from `swagger_test_suite.csv` to verify core operational logic:
 
- Testing & Validation
+### Scenario 1: Automated E-Tag Transit (Success)
 
-Automated Testing (Swagger UI)
+* **Endpoint:** `POST /api/lane/vehicle-arrival`
+* **PayloadBody:**
 
-Navigate to http://127.0.0.1:8000/docs. You can reference the swagger_test_suite.csv file included in the repository for a complete matrix of exact JSON payloads to test edge cases.
-
-Example Scenario 1: Silent Stolen Vehicle Interception
-
+```json
 {
   "lane_id": 101,
-  "captured_plate": "ISB-789"
+  "captured_plate": "KHI-881",
+  "e_tag_id": "TAG-PK-101"
 }
 
+```
 
-Result: The DB trigger intercepts the transaction, logs a critical administrative alert, and instructs the application to open the barrier normally without alerting the driver.
+* **System Response:** `200 OK`. Deducts Rs. 50.00 from the tag balance, logs a settled transaction, and signals the physical barrier to open.
 
-Example Scenario 2: Webhook Payment Callback When a QR code is generated for a driver with no E-Tag, copy the returned qr_token and use the /api/webhooks/payment-callback endpoint to simulate a mobile payment:
+### Scenario 2: Insufficient Funds Fallback
 
+* **Endpoint:** `POST /api/lane/vehicle-arrival`
+* **PayloadBody:**
+
+```json
 {
-  "qr_token": "PASTE_TOKEN_HERE",
+  "lane_id": 101,
+  "captured_plate": "ISB-505",
+  "e_tag_id": "TAG-PK-103"
+}
+
+```
+
+* **System Response:** `200 OK` (`pending_payment`). Detects low balance (Rs. 15.00), aborts the deduction, and generates a secure 180-second `qr_token`.
+
+### Scenario 3: Silent Police Interception (Stolen Car holding Valid Tag)
+
+* **Endpoint:** `POST /api/lane/vehicle-arrival`
+* **PayloadBody:**
+
+```json
+{
+  "lane_id": 101,
+  "captured_plate": "FSD-808",
+  "e_tag_id": "TAG-PK-110"
+}
+
+```
+
+* **System Response:** `200 OK`. Queries the security registry first, identifies the vehicle as stolen, ignores the active tag balance entirely, and triggers silent barrier opening while logging an active law enforcement dispatch flag.
+
+### Scenario 4: Multi-Gateway Webhook Settlement
+
+Once a QR token is generated for an un-tagged vehicle, copy the returned `"qr_token"` string and test the settlement webhook:
+
+* **Endpoint:** `POST /api/webhooks/payment-callback`
+* **PayloadBody:**
+
+```json
+{
+  "qr_token": "PASTE_THE_COPIED_TOKEN_HERE",
   "amount_paid": 50.00,
   "payment_method": "Mobile"
 }
 
+```
 
-Result: Updates the token state to 'Utilized', commits the transaction to the ledger, and signals the lane barrier to open.
+* **System Response:** `200 OK`. Validates token freshness, logs the transaction against the specified gateway (`Mobile`, `Cash`, or `E-Tag`), marks the session as settled, and issues the barrier open signal.
+
+```
+
+```
