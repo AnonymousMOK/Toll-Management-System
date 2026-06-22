@@ -117,7 +117,6 @@ No Node.js configuration or separate web server is required. Simply double-click
 * **`driverKiosk.html`**: Simulates the automated smart toll lane. Use the bottom presenter panel to simulate vehicle arrivals (`KHI-123`, `LHR-456`, `ISB-789`).
 * **`operator_dashboard.html`**: Simulates a hybrid/manual booth worker's touch terminal.
 * **`index.html`**: Displays executive throughput analytics, KPI metrics, and system flow visualizers.
-* **`standalone_kiosk.html`**: An offline-only presentation fallback that simulates all network delays and visual states entirely in the browser.
 
 ---
 
@@ -190,7 +189,5 @@ Once a QR token is generated for an un-tagged vehicle, copy the returned `"qr_to
 ```
 
 * **System Response:** `200 OK`. Validates token freshness, logs the transaction against the specified gateway (`Mobile`, `Cash`, or `E-Tag`), marks the session as settled, and issues the barrier open signal.
-
-```
 
 ```
