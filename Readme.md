@@ -77,7 +77,7 @@ pip install fastapi uvicorn sqlalchemy psycopg2-binary python-dotenv pydantic
 Create or verify the `.env` file in your root directory. Make sure a blank database named `central_toll_system` is created inside pgAdmin first:
 
 ```env
-DATABASE_URL=postgresql://postgres:mokpost@localhost:5432/central_toll_system
+DATABASE_URL=postgresql://postgres:password@localhost:5432/central_toll_system
 
 ```
 
