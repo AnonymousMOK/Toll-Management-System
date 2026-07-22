@@ -27,15 +27,15 @@ def initialize_database():
             RETURNS TRIGGER AS $$
             BEGIN
                 IF EXISTS (SELECT 1 FROM excise.vehicles WHERE plate_number = NEW.captured_plate AND status = 'Stolen') THEN
-                    INSERT INTO toll.admin_alerts (passage_id, alert_type, details)
-                    VALUES (NEW.passage_id, 'Stolen_Vehicle_Detected', 'CRITICAL: Stolen vehicle plate ' || NEW.captured_plate || ' detected at toll barrier.');
+                    -- ADD gen_random_uuid() HERE
+                    INSERT INTO toll.admin_alerts (alert_id, passage_id, alert_type, details)
+                    VALUES (gen_random_uuid(), NEW.passage_id, 'Stolen_Vehicle_Detected', 'CRITICAL: Stolen vehicle plate ' || NEW.captured_plate || ' detected at toll barrier.');
                     NEW.payment_method_used := 'None_Silent_Flag';
                 END IF;
                 RETURN NEW;
             END;
             $$ LANGUAGE plpgsql;
-        """))
-        
+        """))        
         # Attach the trigger to the passages table
         conn.execute(text("DROP TRIGGER IF EXISTS trg_silent_theft_detect ON toll.passages;"))
         conn.execute(text("""

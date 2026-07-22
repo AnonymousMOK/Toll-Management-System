@@ -19,3 +19,4 @@ class ArrivalResponse(BaseModel):
 class PaymentCallbackRequest(BaseModel):
     qr_token: str
     amount_paid: float
+    payment_method: str = 'Mobile' 

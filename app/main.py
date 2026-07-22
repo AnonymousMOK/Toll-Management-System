@@ -85,7 +85,7 @@ def process_vehicle_arrival(request: VehicleArrivalRequest, db: Session = Depend
                         payment_gateway='Internal_ETag',
                         status='Settled'
                     )
-                    db.add_all([new_passage, e_tag_record, txn])
+                    db.add(txn)
                     db.commit()
                     
                     return ArrivalResponse(
@@ -139,12 +139,19 @@ def payment_webhook(request: PaymentCallbackRequest, db: Session = Depends(get_d
             
         # 3. Mark Token as Paid
         qr_record.status = 'Utilized'
+
+        gateway_mapping = {
+            'Mobile': 'Mobile_Wallet_Webhook',
+            'Cash': 'Manual_Cash_Collection',
+            'E-Tag': 'E_Tag_Delayed_TopUp'
+        }
+        gateway_used = gateway_mapping.get(request.payment_method, 'Unknown_Gateway')
         
         # 4. Create the Settled Transaction in the Ledger
         txn = Transaction(
             passage_id=qr_record.passage_id,
             amount_charged=Decimal(str(request.amount_paid)),
-            payment_gateway='Mobile_Wallet_Mock',
+            payment_gateway=gateway_used,
             status='Settled'
         )
         

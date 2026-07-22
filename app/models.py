@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Integer, DateTime, Numeric, Boolean, Fore
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from app.database import Base
+from datetime import datetime
 
 # --- EXCISE SCHEMA ---
 class Owner(Base):
@@ -49,7 +50,7 @@ class Passage(Base):
     passage_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lane_id = Column(Integer, ForeignKey("toll.lanes.lane_id"))
     captured_plate = Column(String)
-    entry_timestamp = Column(DateTime)
+    entry_timestamp = Column(DateTime, default=datetime.now)
     exit_timestamp = Column(DateTime, nullable=True)
     payment_method_used = Column(String)
 
@@ -60,7 +61,7 @@ class QRToken(Base):
     qr_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     passage_id = Column(UUID(as_uuid=True), ForeignKey("toll.passages.passage_id"))
     secure_token = Column(String, unique=True, default=lambda: str(uuid.uuid4()))
-    generated_at = Column(DateTime)
+    generated_at = Column(DateTime, default=datetime.now)
     expires_at = Column(DateTime)
     status = Column(String, default='Active')
 
@@ -73,7 +74,7 @@ class AdminAlert(Base):
     alert_type = Column(String)
     details = Column(String)
     is_resolved = Column(Boolean, default=False)
-    created_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.now)
 
 # --- PAYMENT SCHEMA ---
 class ETag(Base):
@@ -95,4 +96,4 @@ class Transaction(Base):
     payment_gateway = Column(String)
     gateway_reference = Column(String)
     status = Column(String, default='Pending')
-    created_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.now)
