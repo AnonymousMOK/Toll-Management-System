@@ -1,3 +1,4 @@
+from decimal import Decimal
 from pydantic import BaseModel
 from typing import Optional
 from uuid import UUID
@@ -18,5 +19,5 @@ class ArrivalResponse(BaseModel):
 
 class PaymentCallbackRequest(BaseModel):
     qr_token: str
-    amount_paid: float
+    amount_paid: Decimal
     payment_method: str = 'Mobile' 
